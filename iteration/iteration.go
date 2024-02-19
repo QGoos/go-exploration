@@ -30,11 +30,10 @@ func SumSlice(nums []int) int {
 // Returns: slice of integers
 // sum N individual slices and compile them in another slice
 func SumSlices(nums ...[]int) []int {
-	lengthOfNumbers := len(nums)
-	sums := make([]int, lengthOfNumbers)
+	var sums []int
 
-	for i, numbers := range nums {
-		sums[i] = SumSlice(numbers)
+	for _, numbers := range nums {
+		sums = append(sums, SumSlice(numbers))
 	}
 
 	return sums
