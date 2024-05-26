@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sorry, Eh!</title>
+    <meta charset="UTF-8"/>
+    <meta name="Canadian header" content="Wow, drop a prime, it really helps with life!" lang="en"/>
+</head>
+<body>
+<nav role="navigation">
+    <div>
+        <h1>Webdev with Go? Better than I thought!</h1>
+        <ul>
+            <li><a href="/">home</a></li>
+            <li><a href="about">about</a></li>
+            <li><a href="archive">archive</a></li>
+        </ul>
+    </div>
+</nav>
+<main>
+
+<ol><li><a href="/post/sorry-eh">Sorry, Eh</a></li><li><a href="/post/hello-world-2">Hello World 2</a></li></ol>
+
+</main>
+<footer>
+    <ul>
+        <li><a href="https://www.twitch.tv/iced_imp">Twitch</a></li>
+    </ul>
+</footer>
+</body>
+</html>
