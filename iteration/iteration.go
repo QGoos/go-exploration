@@ -115,3 +115,32 @@ func SumSlices(nums ...[]int) []int {
 func Search(dictionary map[string]string, target string) string {
 	return dictionary[target]
 }
+
+// Sum calculates the total from a slice of numbers.
+func Sum(numbers []int) int {
+	add := func(sums, x int) int { return sums + x }
+	return Reduce(numbers, add, 0)
+}
+
+// SumAllTails calculates the sums of all but the first number given a collection of slices.
+func SumAllTails(numbersToSum ...[]int) []int {
+	sumTail := func(sums, numbers []int) []int {
+		if len(numbers) == 0 {
+			return append(sums, 0)
+		} else {
+			tail := numbers[1:]
+			return append(sums, Sum(tail))
+		}
+	}
+
+	return Reduce(numbersToSum, sumTail, []int{})
+}
+
+func Reduce[T any](collection []T, f func(T, T) T, initialValue T) T {
+	result := initialValue
+	for _, val := range collection {
+		result = f(result, val)
+	}
+
+	return result
+}
