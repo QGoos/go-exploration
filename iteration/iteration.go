@@ -136,11 +136,20 @@ func SumAllTails(numbersToSum ...[]int) []int {
 	return Reduce(numbersToSum, sumTail, []int{})
 }
 
-func Reduce[T any](collection []T, f func(T, T) T, initialValue T) T {
+func Reduce[T, B any](collection []T, f func(B, T) B, initialValue B) B {
 	result := initialValue
 	for _, val := range collection {
 		result = f(result, val)
 	}
 
 	return result
+}
+
+func Find[T any](collection []T, predicate func(T) bool) (value T, found bool) {
+	for _, val := range collection {
+		if predicate(val) {
+			return val, true
+		}
+	}
+	return
 }

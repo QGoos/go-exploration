@@ -125,22 +125,36 @@ func TestReduce(t *testing.T) {
 }
 
 func TestBadBank(t *testing.T) {
-	transactions := []Transaction{
-		{
-			From: "Chris",
-			To:   "Riya",
-			Sum:  100.0,
-		},
-		{
-			From: "Adil",
-			To:   "Chris",
-			Sum:  25.0,
-		},
+	var (
+		riya  = Account{Name: "Riya", Balance: 100.0}
+		chris = Account{Name: "Chris", Balance: 75.0}
+		adil  = Account{Name: "Adil", Balance: 200.0}
+
+		transactions = []Transaction{
+			NewTransaction(chris, riya, 100.0),
+			NewTransaction(adil, chris, 25.0),
+		}
+	)
+
+	newBalanceFor := func(account Account) float64 {
+		return NewBalanceFor(account, transactions).Balance
 	}
 
-	AssertEqual(t, BalanceFor(transactions, "Riya"), 100.0)
-	AssertEqual(t, BalanceFor(transactions, "Chris"), -75.0)
-	AssertEqual(t, BalanceFor(transactions, "Adil"), -25.0)
+	AssertEqual(t, newBalanceFor(riya), 200.0)
+	AssertEqual(t, newBalanceFor(chris), 0.0)
+	AssertEqual(t, newBalanceFor(adil), 175.0)
+}
+
+func TestFind(t *testing.T) {
+	t.Run("find first even number", func(t *testing.T) {
+		numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+		firstEvenNumber, found := Find(numbers, func(x int) bool {
+			return x%2 == 0
+		})
+		AssertTrue(t, found)
+		AssertEqual(t, firstEvenNumber, 2)
+	})
 }
 
 func BenchmarkRepeat(b *testing.B) {
@@ -174,5 +188,19 @@ func AssertNotEqual(t *testing.T, got, want any) {
 	t.Helper()
 	if got == want {
 		t.Errorf("didn't want %v", got)
+	}
+}
+
+func AssertTrue(t testing.TB, got bool) {
+	t.Helper()
+	if !got {
+		t.Errorf("Got %+v wanted true", got)
+	}
+}
+
+func AssertFalse(t testing.TB, got bool) {
+	t.Helper()
+	if got {
+		t.Errorf("Got %+v want false", got)
 	}
 }
