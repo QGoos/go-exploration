@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	error_fix := &dummy.InMemoryPlayerStore{}
-	server := &webserver.PlayerServer{error_fix}
+	server := &webserver.PlayerServer{dummy.NewInMemoryPlayerStore()}
 	log.Fatal(http.ListenAndServe(":5000", server))
 }
