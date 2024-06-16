@@ -4,12 +4,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"http_go_sample/dummy"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := dummy.NewInMemoryPlayerStore[Player]()
+	store := NewInMemoryPlayerStore()
 	server := NewPlayerServer(store)
 	player := "Darius"
 
