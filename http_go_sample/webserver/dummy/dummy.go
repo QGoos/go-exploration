@@ -1,37 +1,39 @@
 package dummy
 
-// import (
-// 	"sync"
-// )
+import (
+	"http_go_sample/webserver"
+	"sync"
+)
 
-// type InMemoryPlayerStore struct {
-// 	store map[string]int
-// 	lock  sync.RWMutex
-// }
+type InMemoryPlayerStore[T webserver.Player] struct {
+	store map[string]int
+	lock  sync.RWMutex
+}
 
-// func (i *InMemoryPlayerStore) GetLeague() []Player {
-// 	var league []InMemoryPlayerStore
-// 	for name, wins := range i.store {
-// 		league = append(league, Player{name, wins})
-// 	}
-// 	return league
-// }
+func (i *InMemoryPlayerStore[T]) GetLeague() []T {
+	var league []T
+	for name, wins := range i.store {
+		player := T{Name: name, Wins: wins}
+		league = append(league, player)
+	}
+	return league
+}
 
-// func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
-// 	i.lock.RLock()
-// 	defer i.lock.RUnlock()
-// 	return i.store[name]
-// }
+func (i *InMemoryPlayerStore[T]) GetPlayerScore(name string) int {
+	i.lock.RLock()
+	defer i.lock.RUnlock()
+	return i.store[name]
+}
 
-// func (i *InMemoryPlayerStore) RecordWin(name string) {
-// 	i.lock.Lock()
-// 	defer i.lock.Unlock()
-// 	i.store[name]++
-// }
+func (i *InMemoryPlayerStore[T]) RecordWin(name string) {
+	i.lock.Lock()
+	defer i.lock.Unlock()
+	i.store[name]++
+}
 
-// func NewInMemoryPlayerStore() *InMemoryPlayerStore {
-// 	return &InMemoryPlayerStore{
-// 		map[string]int{},
-// 		sync.RWMutex{},
-// 	}
-// }
+func NewInMemoryPlayerStore[T webserver.Player]() *InMemoryPlayerStore[T] {
+	return &InMemoryPlayerStore[T]{
+		map[string]int{},
+		sync.RWMutex{},
+	}
+}
