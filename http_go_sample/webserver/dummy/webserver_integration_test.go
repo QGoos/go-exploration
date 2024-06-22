@@ -1,18 +1,26 @@
 package dummy
 
 import (
-	"encoding/json"
 	"fmt"
 	"http_go_sample/webserver"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := NewInMemoryPlayerStore[webserver.Player]()
+	database, closer := createTempFile(t, `[]`)
+	defer closer()
+	store, err := webserver.NewFileSystemPlayerStore(database) //NewInMemoryPlayerStore[webserver.League]()
+
+	if err != nil {
+		log.Fatalf("problem creating file system player store, %v ", err)
+	}
+
 	server := webserver.NewPlayerServer(store)
 	player := "Darius"
 
@@ -67,7 +75,7 @@ func assertStatus(t testing.TB, got, want int) {
 
 func getLeagueFromResponse(t testing.TB, body io.Reader) (league []webserver.Player) {
 	t.Helper()
-	err := json.NewDecoder(body).Decode(&league)
+	league, err := webserver.NewLeague(body)
 	if err != nil {
 		t.Fatalf("Unable to parse response from server %q into slice of Player, '%v'", body, err)
 	}
@@ -84,4 +92,23 @@ func assertLeague(t testing.TB, got, want []webserver.Player) {
 func newLeagueRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/league", nil)
 	return req
+}
+
+func createTempFile(t testing.TB, initialData string) (*os.File, func()) {
+	t.Helper()
+
+	tmpfile, err := os.CreateTemp("", "db")
+
+	if err != nil {
+		t.Fatalf("could not create temp file %v", err)
+	}
+
+	tmpfile.Write([]byte(initialData))
+
+	removeFile := func() {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+	}
+
+	return tmpfile, removeFile
 }
