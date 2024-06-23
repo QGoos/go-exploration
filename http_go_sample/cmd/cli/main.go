@@ -10,6 +10,8 @@ import (
 
 const dbFileName = "../game.db.json"
 
+// var dummySpyAlerter = &poker.SpyBlindAlerter{}
+
 func main() {
 	store, closer, err := webserver.FileSystemPlayerStoreFromFile(dbFileName)
 
@@ -21,6 +23,7 @@ func main() {
 	fmt.Println("Let's play poker!")
 	fmt.Println("Type {Name} wins to record a win.")
 
-	game := poker.NewCLI(store, os.Stdin)
-	game.PlayPoker()
+	game := poker.NewGame(poker.BlindAlerterFunc(poker.StdOutAlerter), store)
+	cli := poker.NewCLI(os.Stdin, os.Stdout, game)
+	cli.PlayPoker()
 }
