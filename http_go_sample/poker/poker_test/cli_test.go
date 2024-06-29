@@ -1,4 +1,4 @@
-package poker_test
+package poker
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ type GameSpy struct {
 	StartCalled  bool
 }
 
-func (g *GameSpy) Start(numberOfPlayers int) {
+func (g *GameSpy) Start(numberOfPlayers int, alertsDestination io.Writer) {
 	g.StartedWith = numberOfPlayers
 	g.StartCalled = true
 }

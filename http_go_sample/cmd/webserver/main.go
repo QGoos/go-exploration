@@ -1,6 +1,7 @@
 package main
 
 import (
+	"http_go_sample/poker"
 	"http_go_sample/webserver"
 	"log"
 	"net/http"
@@ -16,7 +17,13 @@ func main() {
 	}
 	defer closer()
 
-	server := webserver.NewPlayerServer(store)
+	game := poker.NewGame(poker.BlindAlerterFunc(poker.Alerter), store)
+
+	server, err := webserver.NewPlayerServer(store, game)
+
+	if err != nil {
+		log.Fatalf("problem creating player server %v", err)
+	}
 
 	if err := http.ListenAndServe(":5000", server); err != nil {
 		log.Fatalf("Not good man: could not listen on port 5000 %v", err)

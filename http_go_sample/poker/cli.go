@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"http_go_sample/webserver"
 	"io"
 	"strconv"
 	"strings"
@@ -13,18 +14,13 @@ const PlayerPrompt = "Please enter the number of players: "
 const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
 const BadPlayerWinnerErrMsg = "bad value recieved for winner, please enter {Name} wins"
 
-type Game interface {
-	Start(numberOfPlayers int)
-	Finish(winner string)
-}
-
 type CLI struct {
 	In   *bufio.Scanner
 	Out  io.Writer
-	Game Game
+	Game webserver.Game
 }
 
-func NewCLI(in io.Reader, out io.Writer, game Game) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game webserver.Game) *CLI {
 	return &CLI{
 		In:   bufio.NewScanner(in),
 		Out:  out,
@@ -43,7 +39,7 @@ func (cli *CLI) PlayPoker() {
 		return
 	}
 
-	cli.Game.Start(numberOfPlayers)
+	cli.Game.Start(numberOfPlayers, cli.Out)
 
 	winnerInput := cli.readLine()
 	winner, err := extractWinner(winnerInput)

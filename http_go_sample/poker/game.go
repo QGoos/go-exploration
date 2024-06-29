@@ -2,6 +2,8 @@ package poker
 
 import (
 	"http_go_sample/webserver"
+	"io"
+	"os"
 	"time"
 )
 
@@ -17,13 +19,13 @@ func NewGame(alerter BlindAlerter, store webserver.PlayerStore) *TexasHoldem {
 	}
 }
 
-func (p *TexasHoldem) Start(numberOfPlayers int) {
+func (p *TexasHoldem) Start(numberOfPlayers int, alertsDestination io.Writer) {
 	blindIncrement := time.Duration(5+numberOfPlayers) * time.Minute
 
 	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
 	blindTime := 0 * time.Second
 	for _, blind := range blinds {
-		p.Alerter.ScheduleAlertAt(blindTime, blind)
+		p.Alerter.ScheduleAlertAt(blindTime, blind, os.Stdout)
 		blindTime = blindTime + blindIncrement
 	}
 }

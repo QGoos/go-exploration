@@ -2,10 +2,30 @@ package dummy
 
 import (
 	"http_go_sample/webserver"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+)
+
+type GameSpy struct {
+	StartedWith  int
+	FinishedWith string
+	StartCalled  bool
+}
+
+func (g *GameSpy) Start(numberOfPlayers int, alertsDestination io.Writer) {
+	g.StartedWith = numberOfPlayers
+	g.StartCalled = true
+}
+
+func (g *GameSpy) Finish(winner string) {
+	g.FinishedWith = winner
+}
+
+var (
+	dummyGame = &GameSpy{}
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
@@ -17,7 +37,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		log.Fatalf("problem creating file system player store, %v ", err)
 	}
 
-	server := webserver.NewPlayerServer(store)
+	server, _ := webserver.NewPlayerServer(store, dummyGame)
 	player := "Darius"
 
 	server.ServeHTTP(httptest.NewRecorder(), webserver.NewPostWinRequest(player))

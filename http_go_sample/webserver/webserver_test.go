@@ -1,9 +1,29 @@
 package webserver
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+)
+
+type GameSpy struct {
+	StartedWith  int
+	FinishedWith string
+	StartCalled  bool
+}
+
+func (g *GameSpy) Start(numberOfPlayers int, alertsDestination io.Writer) {
+	g.StartedWith = numberOfPlayers
+	g.StartCalled = true
+}
+
+func (g *GameSpy) Finish(winner string) {
+	g.FinishedWith = winner
+}
+
+var (
+	dummyGame = &GameSpy{}
 )
 
 func TestGETPlayers(t *testing.T) {
@@ -15,7 +35,7 @@ func TestGETPlayers(t *testing.T) {
 		nil,
 		nil,
 	}
-	server := NewPlayerServer(&store)
+	server, _ := NewPlayerServer(&store, dummyGame)
 	t.Run("returns Darius's score", func(t *testing.T) {
 		request := GetScoreRequest("Darius")
 		response := httptest.NewRecorder()
@@ -52,7 +72,7 @@ func TestStoreWins(t *testing.T) {
 		nil,
 		nil,
 	}
-	server := NewPlayerServer(&store)
+	server, _ := NewPlayerServer(&store, dummyGame)
 	t.Run("returns accepted on POST", func(t *testing.T) {
 		player := "Darius"
 
@@ -74,7 +94,7 @@ func TestLeague(t *testing.T) {
 			{"Tara", 14},
 		}
 		store := StubPlayerStore{nil, nil, wantedLeague}
-		server := NewPlayerServer(&store)
+		server, _ := NewPlayerServer(&store, dummyGame)
 
 		request := NewLeagueRequest()
 		response := httptest.NewRecorder()

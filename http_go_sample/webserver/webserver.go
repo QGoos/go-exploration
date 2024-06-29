@@ -3,11 +3,23 @@ package webserver
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
+	"text/template"
+
+	"github.com/gorilla/websocket"
 )
 
 const jsonContentType = "application/json"
+const htmlTemplatePath = "game.html"
+
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 type Player struct {
 	Name string
@@ -20,9 +32,15 @@ type PlayerStore interface {
 	GetLeague() League
 }
 
+type PlayerServerWS struct {
+	*websocket.Conn
+}
+
 type PlayerServer struct {
 	Store PlayerStore
 	http.Handler
+	Template *template.Template
+	Game     Game
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,16 +75,68 @@ func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
 	fmt.Fprint(w, score)
 }
 
-func NewPlayerServer(store PlayerStore) *PlayerServer {
+func (p *PlayerServer) playGame(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("game.html")
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("problem loading template %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl.Execute(w, nil)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) webSocket(w http.ResponseWriter, r *http.Request) {
+	conn, _ := wsUpgrader.Upgrade(w, r, nil)
+
+	_, numberOfPlayersMsg, _ := conn.ReadMessage()
+	numberOfPlayers, _ := strconv.Atoi(string(numberOfPlayersMsg))
+	p.Game.Start(numberOfPlayers, io.Discard)
+
+	_, winner, _ := conn.ReadMessage()
+	p.Game.Finish(string(winner))
+}
+
+func NewPlayerServerWS(w http.ResponseWriter, r *http.Request) *PlayerServerWS {
+	conn, err := wsUpgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		log.Printf("problem upgrading connection to Websockets %v\n", err)
+	}
+
+	return &PlayerServerWS{conn}
+}
+
+func (w *PlayerServerWS) WaitForMsg() string {
+	_, msg, err := w.ReadMessage()
+	if err != nil {
+		log.Printf("error reading from websocket %v\n", err)
+	}
+	return string(msg)
+}
+
+func NewPlayerServer(store PlayerStore, game Game) (*PlayerServer, error) {
 	p := new(PlayerServer)
 
+	tmpl, err := template.ParseFiles(htmlTemplatePath)
+
+	if err != nil {
+		return nil, fmt.Errorf("problem opening %s %v", htmlTemplatePath, err)
+	}
+
+	p.Game = game
+
+	p.Template = tmpl
 	p.Store = store
 
 	router := http.NewServeMux()
 	router.Handle("/league", http.HandlerFunc(p.leagueHandler))
 	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	router.Handle("/game", http.HandlerFunc(p.playGame))
+	router.Handle("/ws", http.HandlerFunc(p.webSocket))
 
 	p.Handler = router
 
-	return p
+	return p, nil
 }

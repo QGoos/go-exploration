@@ -1,9 +1,10 @@
-package poker_test
+package poker
 
 import (
 	"fmt"
 	"http_go_sample/poker"
 	"http_go_sample/webserver"
+	"io"
 	"testing"
 	"time"
 )
@@ -13,7 +14,7 @@ func TestGameStart(t *testing.T) {
 		blindAlerter := &poker.SpyBlindAlerter{}
 		game := poker.NewGame(blindAlerter, dummyPlayerStore)
 
-		game.Start(5)
+		game.Start(5, io.Discard)
 
 		cases := []poker.ScheduledAlert{
 			{At: 0 * time.Second, Amount: 100},
@@ -36,7 +37,7 @@ func TestGameStart(t *testing.T) {
 		blindAlerter := &poker.SpyBlindAlerter{}
 		game := poker.NewGame(blindAlerter, dummyPlayerStore)
 
-		game.Start(7)
+		game.Start(7, io.Discard)
 
 		cases := []poker.ScheduledAlert{
 			{At: 0 * time.Second, Amount: 100},
