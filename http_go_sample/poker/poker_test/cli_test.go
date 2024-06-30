@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
 
 var dummySpyAlerter = &poker.SpyBlindAlerter{}
@@ -19,11 +20,14 @@ type GameSpy struct {
 	StartedWith  int
 	FinishedWith string
 	StartCalled  bool
+	FinishCalled bool
+	BlindAlert   []byte
 }
 
 func (g *GameSpy) Start(numberOfPlayers int, alertsDestination io.Writer) {
 	g.StartedWith = numberOfPlayers
 	g.StartCalled = true
+	alertsDestination.Write(g.BlindAlert)
 }
 
 func (g *GameSpy) Finish(winner string) {
@@ -56,7 +60,7 @@ func TestCLI(t *testing.T) {
 		cli.PlayPoker()
 
 		assertStartedWith(t, game, 7)
-		assertFinishedWith(t, game.FinishedWith, "Chris")
+		assertFinishedWith(t, game, "Chris")
 	})
 	t.Run("record 'Cleo' win from user input", func(t *testing.T) {
 		in := userSends("7", "Cleo wins")
@@ -66,7 +70,7 @@ func TestCLI(t *testing.T) {
 		cli.PlayPoker()
 
 		assertStartedWith(t, game, 7)
-		assertFinishedWith(t, game.FinishedWith, "Cleo")
+		assertFinishedWith(t, game, "Cleo")
 	})
 	t.Run("it prints an error when a non numeric value is entered and does not start the game", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
@@ -123,16 +127,34 @@ func assertStarted(t testing.TB, game *GameSpy) {
 	}
 }
 
-func assertFinishedWith(t testing.TB, got, want string) {
+func assertFinishedWith(t testing.TB, game *GameSpy, winner string) {
 	t.Helper()
-	if got != want {
-		t.Errorf("expected finish called with %q but got %q", want, got)
+	passed := retryUntil(500*time.Millisecond, func() bool {
+		return game.FinishedWith == winner
+	})
+
+	if !passed {
+		t.Errorf("expected finish called with %q but got %q", winner, game.FinishedWith)
 	}
 }
 
 func assertStartedWith(t testing.TB, game *GameSpy, numberOfPlayersWanted int) {
 	t.Helper()
-	if game.StartedWith != numberOfPlayersWanted {
+	passed := retryUntil(500*time.Millisecond, func() bool {
+		return game.StartedWith == numberOfPlayersWanted
+	})
+
+	if !passed {
 		t.Errorf("expected finish called with %q but got %q", numberOfPlayersWanted, game.StartedWith)
 	}
+}
+
+func retryUntil(d time.Duration, f func() bool) bool {
+	deadline := time.Now().Add(d)
+	for time.Now().Before(deadline) {
+		if f() {
+			return true
+		}
+	}
+	return false
 }

@@ -3,7 +3,6 @@ package webserver
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -88,14 +87,14 @@ func (p *PlayerServer) playGame(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PlayerServer) webSocket(w http.ResponseWriter, r *http.Request) {
-	conn, _ := wsUpgrader.Upgrade(w, r, nil)
+	ws := NewPlayerServerWS(w, r)
 
-	_, numberOfPlayersMsg, _ := conn.ReadMessage()
-	numberOfPlayers, _ := strconv.Atoi(string(numberOfPlayersMsg))
-	p.Game.Start(numberOfPlayers, io.Discard)
+	numberOfPlayersMsg := ws.WaitForMsg()
+	numberOfPlayers, _ := strconv.Atoi(numberOfPlayersMsg)
+	p.Game.Start(numberOfPlayers, ws)
 
-	_, winner, _ := conn.ReadMessage()
-	p.Game.Finish(string(winner))
+	winner := ws.WaitForMsg()
+	p.Game.Finish(winner)
 }
 
 func NewPlayerServerWS(w http.ResponseWriter, r *http.Request) *PlayerServerWS {
@@ -114,6 +113,16 @@ func (w *PlayerServerWS) WaitForMsg() string {
 		log.Printf("error reading from websocket %v\n", err)
 	}
 	return string(msg)
+}
+
+func (w *PlayerServerWS) Write(p []byte) (n int, err error) {
+	err = w.WriteMessage(websocket.TextMessage, p)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return len(p), nil
 }
 
 func NewPlayerServer(store PlayerStore, game Game) (*PlayerServer, error) {
